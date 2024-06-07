@@ -3,7 +3,7 @@ import Image from "next/image";
 export default function Home() {
   return (
   <>
-    <div>Next.js 배포 테스트 - 이미지</div>
+    <div>Next.js 배포 테스트 - css</div>
     <div className="mt-3.5">
       <Image
         src="/next.svg"
