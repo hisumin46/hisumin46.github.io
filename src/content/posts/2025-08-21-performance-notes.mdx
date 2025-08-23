@@ -1,0 +1,150 @@
+---
+title: "웹 성능 최적화 가이드"
+description: "Core Web Vitals를 중심으로 웹 성능을 개선하는 실용적인 방법들"
+date: 2025-08-21
+tags: ["performance", "web", "optimization"]
+draft: false
+featured: false
+author: "Admin"
+tableOfContents: true
+---
+
+## Core Web Vitals 이해하기
+
+Google이 제시한 세 가지 핵심 지표를 중심으로 성능을 측정하고 개선해봅시다.
+
+### LCP (Largest Contentful Paint)
+
+페이지의 가장 큰 콘텐츠가 렌더링되는 시간입니다. **2.5초 이내**가 목표입니다.
+
+개선 방법:
+- 이미지 최적화 및 lazy loading
+- 중요한 리소스 preload
+- CDN 활용
+
+```html
+<!-- 중요한 이미지 preload -->
+<link rel="preload" as="image" href="hero-image.webp">
+```
+
+### FID (First Input Delay)
+
+사용자의 첫 상호작용에 대한 응답 시간입니다. **100ms 이내**가 목표입니다.
+
+개선 방법:
+- JavaScript 실행 시간 최소화
+- Web Worker 활용
+- 코드 분할 (Code Splitting)
+
+```javascript
+// 무거운 작업은 Web Worker로
+const worker = new Worker('heavy-computation.js');
+worker.postMessage({ command: 'process', data: largeData });
+```
+
+### CLS (Cumulative Layout Shift)
+
+페이지 로딩 중 발생하는 레이아웃 이동입니다. **0.1 이하**가 목표입니다.
+
+개선 방법:
+- 이미지/비디오에 명시적 크기 지정
+- 동적 콘텐츠를 위한 공간 예약
+- 웹폰트 로딩 최적화
+
+## 실전 최적화 기법
+
+### 1. 이미지 최적화
+
+```javascript
+// Next.js Image 컴포넌트 예시
+import Image from 'next/image';
+
+export default function Hero() {
+  return (
+    <Image
+      src="/hero.jpg"
+      alt="Hero"
+      width={1200}
+      height={600}
+      priority // LCP 이미지는 priority 설정
+      placeholder="blur"
+    />
+  );
+}
+```
+
+### 2. 번들 크기 최적화
+
+```javascript
+// 동적 import로 코드 분할
+const HeavyComponent = lazy(() => 
+  import('./HeavyComponent')
+);
+
+// 사용할 때
+<Suspense fallback={<Loading />}>
+  <HeavyComponent />
+</Suspense>
+```
+
+### 3. 캐싱 전략
+
+```javascript
+// Service Worker 캐싱 예시
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
+});
+```
+
+## 성능 측정 도구
+
+### Lighthouse
+
+Chrome DevTools에 내장된 성능 측정 도구:
+
+```bash
+# CLI로 실행
+lighthouse https://example.com --output html --view
+```
+
+### Web Vitals 라이브러리
+
+```javascript
+import { getCLS, getFID, getLCP } from 'web-vitals';
+
+getCLS(console.log);
+getFID(console.log);
+getLCP(console.log);
+```
+
+## 체크리스트
+
+성능 최적화를 위한 체크리스트:
+
+- [ ] 이미지 포맷 최적화 (WebP, AVIF 사용)
+- [ ] Critical CSS 인라인화
+- [ ] JavaScript 번들 크기 최소화
+- [ ] HTTP/2 또는 HTTP/3 사용
+- [ ] Gzip/Brotli 압축 활성화
+- [ ] 브라우저 캐싱 설정
+- [ ] CDN 활용
+- [ ] Resource Hints 사용 (preconnect, prefetch)
+
+## 실제 적용 사례
+
+최근 프로젝트에서 다음과 같은 개선을 달성했습니다:
+
+| 지표 | 개선 전 | 개선 후 | 개선율 |
+|------|--------|--------|--------|
+| LCP | 4.2s | 1.8s | 57% ⬇️ |
+| FID | 250ms | 45ms | 82% ⬇️ |
+| CLS | 0.25 | 0.05 | 80% ⬇️ |
+
+## 마무리
+
+성능 최적화는 한 번에 끝나는 작업이 아닙니다. 지속적인 모니터링과 개선이 필요합니다. 
+사용자 경험을 최우선으로 생각하며 점진적으로 개선해 나가세요.

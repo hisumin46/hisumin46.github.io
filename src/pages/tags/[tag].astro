@@ -1,0 +1,79 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostCard from '@/components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+// 동적 경로 생성
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  const tags = new Set<string>();
+  
+  posts.forEach(post => {
+    post.data.tags?.forEach(tag => tags.add(tag));
+  });
+  
+  return Array.from(tags).map(tag => ({
+    params: { tag },
+    props: { tag }
+  }));
+}
+
+const { tag } = Astro.props;
+
+// 해당 태그를 가진 포스트 필터링
+const posts = await getCollection('posts', ({ data }) => {
+  return data.draft !== true && data.tags?.includes(tag);
+});
+
+// 날짜 기준 정렬
+const sortedPosts = posts.sort((a, b) => 
+  b.data.date.valueOf() - a.data.date.valueOf()
+);
+---
+
+<BaseLayout 
+  title={`#${tag} 태그`} 
+  description={`${tag} 태그가 포함된 모든 포스트`}
+>
+  <div class="container mx-auto px-4 py-12">
+    <!-- 헤더 -->
+    <div class="mb-12 text-center">
+      <h1 class="text-4xl font-bold tracking-tight">
+        <span class="text-primary">#{tag}</span>
+      </h1>
+      <p class="mt-4 text-lg text-muted-foreground">
+        {sortedPosts.length}개의 포스트가 있습니다
+      </p>
+      <a
+        href="/tags"
+        class="mt-4 inline-flex items-center text-sm text-primary hover:underline"
+      >
+        ← 모든 태그 보기
+      </a>
+    </div>
+
+    <!-- 포스트 그리드 -->
+    {sortedPosts.length > 0 ? (
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {sortedPosts.map((post) => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            date={post.data.date}
+            slug={post.slug}
+            tags={post.data.tags}
+            cover={post.data.cover}
+            coverAlt={post.data.coverAlt}
+            readingTime={post.data.readingTime}
+          />
+        ))}
+      </div>
+    ) : (
+      <div class="rounded-lg border border-dashed p-12 text-center">
+        <p class="text-muted-foreground">
+          이 태그에 해당하는 포스트가 없습니다.
+        </p>
+      </div>
+    )}
+  </div>
+</BaseLayout>

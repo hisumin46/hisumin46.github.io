@@ -1,0 +1,44 @@
+---
+export interface Props {
+  prevPost?: {
+    title: string;
+    url: string;
+  };
+  nextPost?: {
+    title: string;
+    url: string;
+  };
+}
+
+const { prevPost, nextPost } = Astro.props;
+---
+
+{(prevPost || nextPost) && (
+  <nav class="flex items-center justify-between gap-4">
+    <!-- 이전 포스트 -->
+    {prevPost ? (
+      <a
+        href={prevPost.url}
+        class="flex flex-1 flex-col gap-1 rounded-lg border p-4 transition-colors hover:bg-accent"
+      >
+        <span class="text-sm text-muted-foreground">이전 포스트</span>
+        <span class="font-medium line-clamp-2">{prevPost.title}</span>
+      </a>
+    ) : (
+      <div class="flex-1" />
+    )}
+    
+    <!-- 다음 포스트 -->
+    {nextPost ? (
+      <a
+        href={nextPost.url}
+        class="flex flex-1 flex-col gap-1 rounded-lg border p-4 text-right transition-colors hover:bg-accent"
+      >
+        <span class="text-sm text-muted-foreground">다음 포스트</span>
+        <span class="font-medium line-clamp-2">{nextPost.title}</span>
+      </a>
+    ) : (
+      <div class="flex-1" />
+    )}
+  </nav>
+)}

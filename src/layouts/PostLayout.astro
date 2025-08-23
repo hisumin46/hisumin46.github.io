@@ -1,0 +1,175 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import TableOfContents from '@/components/TableOfContents.astro';
+import PostHeader from '@/components/PostHeader.astro';
+import PostNavigation from '@/components/PostNavigation.astro';
+import ShareButtons from '@/components/ShareButtons.astro';
+import { Image } from 'astro:assets';
+import { formatDate, calculateReadingTime } from '@/lib/utils';
+
+export interface Props {
+  title: string;
+  description: string;
+  date: Date;
+  updated?: Date;
+  tags?: string[];
+  cover?: ImageMetadata;
+  coverAlt?: string;
+  author?: string;
+  readingTime?: number;
+  tableOfContents?: boolean;
+  prevPost?: {
+    title: string;
+    url: string;
+  };
+  nextPost?: {
+    title: string;
+    url: string;
+  };
+}
+
+const {
+  title,
+  description,
+  date,
+  updated,
+  tags = [],
+  cover,
+  coverAlt,
+  author = 'Admin',
+  readingTime,
+  tableOfContents = true,
+  prevPost,
+  nextPost
+} = Astro.props;
+
+// 콘텐츠 가져오기
+const content = await Astro.slots.render('default');
+const calculatedReadingTime = readingTime || calculateReadingTime(content);
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  publishedTime={date.toISOString()}
+  modifiedTime={updated?.toISOString()}
+  tags={tags}
+>
+  <article class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- 포스트 헤더 -->
+    <PostHeader
+      title={title}
+      description={description}
+      date={date}
+      updated={updated}
+      author={author}
+      readingTime={calculatedReadingTime}
+      tags={tags}
+    />
+    
+    <!-- 커버 이미지 -->
+    {cover && (
+      <div class="my-8 rounded-lg overflow-hidden">
+        <Image
+          src={cover}
+          alt={coverAlt || title}
+          width={800}
+          height={420}
+          loading="eager"
+          class="w-full h-auto object-cover"
+        />
+      </div>
+    )}
+    
+    <!-- 콘텐츠 래퍼 -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-8">
+      <!-- 메인 콘텐츠 -->
+      <div class="prose prose-lg dark:prose-invert max-w-none">
+        <slot />
+      </div>
+      
+      <!-- 사이드바 -->
+      <aside class="hidden lg:block space-y-6">
+        <!-- 목차 -->
+        {tableOfContents && (
+          <div class="sticky top-20">
+            <TableOfContents />
+          </div>
+        )}
+      </aside>
+    </div>
+    
+    <!-- 포스트 하단 -->
+    <div class="mt-12 space-y-8 border-t pt-8">
+      <!-- 태그 목록 -->
+      {tags.length > 0 && (
+        <div class="flex flex-wrap gap-2">
+          <span class="text-muted-foreground">태그:</span>
+          {tags.map((tag) => (
+            <a
+              href={`/tags/${tag}`}
+              class="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors"
+            >
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )}
+      
+      <!-- 공유 버튼 -->
+      <ShareButtons url={Astro.url.toString()} title={title} />
+      
+      <!-- 이전/다음 포스트 네비게이션 -->
+      <PostNavigation prevPost={prevPost} nextPost={nextPost} />
+    </div>
+  </article>
+  
+  <!-- 스크롤 프로그레스 바 -->
+  <div
+    id="progress-bar"
+    class="fixed top-0 left-0 h-1 bg-primary z-50 transition-all duration-150"
+    style="width: 0%"
+  ></div>
+  
+  <script>
+    // 스크롤 프로그레스 바
+    const progressBar = document.getElementById('progress-bar');
+    
+    if (progressBar) {
+      window.addEventListener('scroll', () => {
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPosition = window.scrollY;
+        const progress = (scrollPosition / scrollHeight) * 100;
+        progressBar.style.width = `${progress}%`;
+      });
+    }
+    
+    // 목차 활성화
+    const observerOptions = {
+      rootMargin: '-100px 0px -70% 0px',
+      threshold: 0
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const id = entry.target.getAttribute('id');
+        const tocLink = document.querySelector(`nav a[href="#${id}"]`);
+        
+        if (tocLink) {
+          if (entry.isIntersecting) {
+            tocLink.classList.add('text-primary', 'font-medium');
+            tocLink.classList.remove('text-muted-foreground');
+          } else {
+            tocLink.classList.remove('text-primary', 'font-medium');
+            tocLink.classList.add('text-muted-foreground');
+          }
+        }
+      });
+    }, observerOptions);
+    
+    // 모든 헤딩 관찰
+    document.querySelectorAll('h2[id], h3[id]').forEach((heading) => {
+      observer.observe(heading);
+    });
+  </script>
+</BaseLayout>

@@ -1,0 +1,135 @@
+---
+title: "Astro로 블로그 시작하기"
+description: "Astro와 TypeScript를 사용하여 정적 블로그를 구축하는 과정을 소개합니다"
+date: 2025-08-20
+tags: ["astro", "typescript", "blog", "web"]
+draft: false
+featured: true
+author: "Admin"
+tableOfContents: true
+---
+
+import { Image } from 'astro:assets';
+
+## 시작하며
+
+오늘부터 기술 블로그를 시작합니다. **Astro**를 선택한 이유와 블로그 구축 과정을 공유하려고 합니다.
+
+## Astro를 선택한 이유
+
+### 1. 뛰어난 성능
+
+Astro는 기본적으로 **Zero JavaScript**를 지향합니다. 필요한 경우에만 JavaScript를 로드하여 매우 빠른 로딩 속도를 제공합니다.
+
+```javascript
+// 필요한 경우에만 JavaScript 로드
+const Component = await import('./Component.js');
+```
+
+### 2. 콘텐츠 중심 설계
+
+Content Collections를 통해 타입 세이프한 콘텐츠 관리가 가능합니다:
+
+```typescript
+import { defineCollection, z } from 'astro:content';
+
+const postsCollection = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    date: z.date(),
+    tags: z.array(z.string()),
+  })
+});
+```
+
+### 3. 뛰어난 DX (Developer Experience)
+
+- TypeScript 기본 지원
+- 핫 모듈 리로딩
+- 직관적인 파일 기반 라우팅
+
+## 블로그 구조
+
+우리 블로그는 다음과 같은 구조로 구성되어 있습니다:
+
+```
+src/
+├── components/     # 재사용 가능한 컴포넌트
+├── content/       # 블로그 포스트 (MDX)
+├── layouts/       # 레이아웃 컴포넌트
+├── pages/         # 페이지 라우트
+└── styles/        # 전역 스타일
+```
+
+## 주요 기능
+
+### 다크 모드 지원
+
+시스템 설정에 따라 자동으로 테마가 변경되며, 수동으로도 토글 가능합니다.
+
+### MDX 지원
+
+마크다운과 JSX를 함께 사용할 수 있어 더 풍부한 콘텐츠 작성이 가능합니다.
+
+<div className="bg-accent p-4 rounded-lg my-4">
+  <p className="text-accent-foreground">
+    이렇게 MDX 컴포넌트를 직접 삽입할 수 있습니다!
+  </p>
+</div>
+
+### 코드 하이라이팅
+
+Shiki를 사용한 아름다운 코드 하이라이팅:
+
+```typescript
+interface Post {
+  title: string;
+  description: string;
+  date: Date;
+  tags: string[];
+}
+
+function formatPost(post: Post): string {
+  return `${post.title} - ${post.date.toLocaleDateString()}`;
+}
+```
+
+## 최적화 전략
+
+### 이미지 최적화
+
+Astro의 내장 이미지 최적화 기능을 활용합니다:
+
+```astro
+---
+import { Image } from 'astro:assets';
+import myImage from '../assets/image.png';
+---
+
+<Image 
+  src={myImage} 
+  alt="설명" 
+  width={800}
+  height={420}
+  loading="lazy"
+/>
+```
+
+### 정적 사이트 생성
+
+빌드 시점에 모든 페이지를 생성하여 최고의 성능을 제공합니다.
+
+## 앞으로의 계획
+
+1. **검색 기능 추가**: Pagefind를 활용한 정적 검색
+2. **댓글 시스템**: Giscus를 통한 GitHub 기반 댓글
+3. **RSS 피드**: 구독자를 위한 RSS 피드 제공
+4. **SEO 최적화**: 메타 태그 및 구조화된 데이터 추가
+
+## 마치며
+
+Astro로 블로그를 구축하는 것은 매우 즐거운 경험이었습니다. 앞으로 더 많은 콘텐츠를 공유하며 블로그를 발전시켜 나가겠습니다.
+
+> **팁**: Astro 공식 문서는 매우 잘 작성되어 있으니 꼭 참고하세요!

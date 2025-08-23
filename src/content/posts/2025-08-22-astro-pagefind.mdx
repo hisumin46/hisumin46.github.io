@@ -1,0 +1,305 @@
+---
+title: "Astro 블로그에 Pagefind 검색 기능 추가하기"
+description: "정적 사이트에 빠르고 효율적인 검색 기능을 구현하는 방법"
+date: 2025-08-22
+tags: ["astro", "search", "pagefind", "tutorial"]
+draft: false
+featured: true
+author: "Admin"
+tableOfContents: true
+---
+
+## Pagefind란?
+
+**Pagefind**는 정적 사이트를 위한 완전히 정적인 검색 라이브러리입니다. 
+빌드 시점에 검색 인덱스를 생성하고, 클라이언트에서 WebAssembly를 통해 검색을 수행합니다.
+
+### 주요 특징
+
+- 🚀 **빠른 검색**: WebAssembly 기반으로 매우 빠른 검색 속도
+- 📦 **작은 번들 크기**: 검색 인덱스를 청크로 분할하여 필요한 부분만 로드
+- 🔧 **쉬운 설정**: 별도의 서버나 API 없이 정적 파일만으로 동작
+- 🌍 **다국어 지원**: 한국어를 포함한 여러 언어 지원
+
+## 설치 및 설정
+
+### 1. Pagefind 설치
+
+```bash
+npm install --save-dev pagefind
+```
+
+### 2. 빌드 스크립트 수정
+
+`package.json`에 빌드 후 Pagefind 인덱싱 추가:
+
+```json
+{
+  "scripts": {
+    "build": "astro build",
+    "postbuild": "pagefind --source dist"
+  }
+}
+```
+
+### 3. Pagefind 설정 파일
+
+프로젝트 루트에 `pagefind.yml` 생성:
+
+```yaml
+source: dist
+bundle_dir: pagefind
+exclude_selectors:
+  - "[data-pagefind-ignore]"
+  - "nav"
+  - "footer"
+  - "script"
+  - "style"
+```
+
+## 검색 UI 구현
+
+### 검색 컴포넌트 생성
+
+```astro
+---
+// src/components/Search.astro
+---
+
+<div id="search-container">
+  <input
+    type="text"
+    id="search-input"
+    placeholder="검색어를 입력하세요..."
+    class="search-input"
+  />
+  <div id="search-results" class="search-results hidden"></div>
+</div>
+
+<script>
+  // Pagefind UI 초기화
+  async function initSearch() {
+    if (typeof window.pagefind === 'undefined') {
+      try {
+        window.pagefind = await import('/pagefind/pagefind.js');
+      } catch (e) {
+        console.error('Pagefind를 로드할 수 없습니다:', e);
+        return;
+      }
+    }
+
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+
+    searchInput?.addEventListener('input', async (e) => {
+      const query = (e.target as HTMLInputElement).value;
+      
+      if (query.length < 2) {
+        searchResults.classList.add('hidden');
+        return;
+      }
+
+      const search = await window.pagefind.search(query);
+      const results = await Promise.all(
+        search.results.slice(0, 5).map(r => r.data())
+      );
+
+      displayResults(results);
+    });
+  }
+
+  function displayResults(results) {
+    const searchResults = document.getElementById('search-results');
+    
+    if (results.length === 0) {
+      searchResults.innerHTML = '<p>검색 결과가 없습니다.</p>';
+    } else {
+      searchResults.innerHTML = results.map(result => `
+        <a href="${result.url}" class="search-result">
+          <h3>${result.meta.title}</h3>
+          <p>${result.excerpt}</p>
+        </a>
+      `).join('');
+    }
+    
+    searchResults.classList.remove('hidden');
+  }
+
+  // 페이지 로드 시 초기화
+  document.addEventListener('DOMContentLoaded', initSearch);
+</script>
+
+<style>
+  .search-input {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  .search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  }
+
+  .search-result {
+    display: block;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--foreground);
+    transition: background 0.2s;
+  }
+
+  .search-result:hover {
+    background: var(--accent);
+  }
+
+  .hidden {
+    display: none;
+  }
+</style>
+```
+
+## 고급 설정
+
+### 검색 대상 지정
+
+특정 요소만 검색 대상으로 지정:
+
+```html
+<article data-pagefind-body>
+  <!-- 이 내용만 검색됨 -->
+</article>
+
+<aside data-pagefind-ignore>
+  <!-- 이 내용은 검색에서 제외 -->
+</aside>
+```
+
+### 메타데이터 추가
+
+검색 결과에 추가 정보 포함:
+
+```html
+<article
+  data-pagefind-body
+  data-pagefind-meta="author:홍길동, category:Tutorial"
+>
+  <!-- 콘텐츠 -->
+</article>
+```
+
+### 한국어 검색 최적화
+
+```javascript
+// 한국어 형태소 분석을 위한 설정
+await window.pagefind.init({
+  language: 'ko',
+  // 추가 옵션
+});
+```
+
+## 성능 최적화
+
+### 1. 검색 디바운싱
+
+```javascript
+let searchTimeout;
+
+searchInput?.addEventListener('input', (e) => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(async () => {
+    const query = (e.target as HTMLInputElement).value;
+    // 검색 수행
+  }, 300);
+});
+```
+
+### 2. 검색 결과 캐싱
+
+```javascript
+const searchCache = new Map();
+
+async function search(query) {
+  if (searchCache.has(query)) {
+    return searchCache.get(query);
+  }
+  
+  const results = await window.pagefind.search(query);
+  searchCache.set(query, results);
+  return results;
+}
+```
+
+## 스타일링 예시
+
+모던한 검색 UI 스타일:
+
+```css
+.search-container {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: var(--card);
+  transition: all 0.3s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  max-height: 400px;
+  overflow-y: auto;
+}
+```
+
+## 문제 해결
+
+### 검색이 작동하지 않을 때
+
+1. 빌드 후 `dist/pagefind` 디렉터리 확인
+2. 브라우저 콘솔에서 에러 메시지 확인
+3. 네트워크 탭에서 pagefind 파일 로드 확인
+
+### 검색 결과가 부정확할 때
+
+1. `data-pagefind-body` 속성 위치 확인
+2. 불필요한 콘텐츠 `data-pagefind-ignore`로 제외
+3. 언어 설정 확인
+
+## 마무리
+
+Pagefind를 사용하면 정적 사이트에도 강력한 검색 기능을 쉽게 추가할 수 있습니다. 
+서버 없이도 빠르고 정확한 검색을 제공할 수 있어, Astro 같은 정적 사이트 생성기와 완벽하게 어울립니다.
+
+더 자세한 정보는 [Pagefind 공식 문서](https://pagefind.app)를 참고하세요!

@@ -1,0 +1,66 @@
+---
+import PostLayout from '@/layouts/PostLayout.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+
+// 동적 경로 생성
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  
+  return posts.map((post, index) => {
+    const sortedPosts = posts
+      .filter(p => !p.data.draft)
+      .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+    
+    const currentIndex = sortedPosts.findIndex(p => p.slug === post.slug);
+    const prevPost = currentIndex < sortedPosts.length - 1 ? sortedPosts[currentIndex + 1] : null;
+    const nextPost = currentIndex > 0 ? sortedPosts[currentIndex - 1] : null;
+    
+    return {
+      params: { slug: post.slug },
+      props: {
+        post,
+        prevPost: prevPost ? {
+          title: prevPost.data.title,
+          url: `/posts/${prevPost.slug}`
+        } : undefined,
+        nextPost: nextPost ? {
+          title: nextPost.data.title,
+          url: `/posts/${nextPost.slug}`
+        } : undefined
+      }
+    };
+  });
+}
+
+type Props = {
+  post: CollectionEntry<'posts'>;
+  prevPost?: {
+    title: string;
+    url: string;
+  };
+  nextPost?: {
+    title: string;
+    url: string;
+  };
+};
+
+const { post, prevPost, nextPost } = Astro.props;
+const { Content } = await post.render();
+---
+
+<PostLayout
+  title={post.data.title}
+  description={post.data.description}
+  date={post.data.date}
+  updated={post.data.updated}
+  tags={post.data.tags}
+  cover={post.data.cover}
+  coverAlt={post.data.coverAlt}
+  author={post.data.author}
+  readingTime={post.data.readingTime}
+  tableOfContents={post.data.tableOfContents}
+  prevPost={prevPost}
+  nextPost={nextPost}
+>
+  <Content />
+</PostLayout>

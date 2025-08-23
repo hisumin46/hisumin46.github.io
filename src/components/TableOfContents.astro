@@ -1,0 +1,75 @@
+---
+---
+
+<nav class="space-y-2" id="table-of-contents">
+  <h3 class="font-semibold text-sm uppercase tracking-wide mb-3">목차</h3>
+  <div id="toc-content" class="space-y-1 text-sm">
+    <!-- 동적으로 생성됨 -->
+  </div>
+</nav>
+
+<script>
+  function generateTableOfContents() {
+    const tocContent = document.getElementById('toc-content');
+    if (!tocContent) return;
+    
+    // 기존 내용 초기화
+    tocContent.innerHTML = '';
+    
+    // 헤딩 요소 가져오기
+    const headings = document.querySelectorAll('article h2, article h3');
+    
+    if (headings.length === 0) {
+      tocContent.innerHTML = '<p class="text-muted-foreground">목차가 없습니다</p>';
+      return;
+    }
+    
+    // 목차 생성
+    const tocList = document.createElement('ul');
+    tocList.className = 'space-y-2';
+    
+    headings.forEach((heading) => {
+      const level = heading.tagName.toLowerCase();
+      const text = heading.textContent || '';
+      const id = heading.id || text.toLowerCase().replace(/\s+/g, '-');
+      
+      // ID가 없으면 추가
+      if (!heading.id) {
+        heading.id = id;
+      }
+      
+      const listItem = document.createElement('li');
+      listItem.className = level === 'h3' ? 'ml-4' : '';
+      
+      const link = document.createElement('a');
+      link.href = `#${id}`;
+      link.textContent = text;
+      link.className = 'block py-1 text-muted-foreground hover:text-primary transition-colors';
+      
+      // 부드러운 스크롤
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.getElementById(id);
+        if (target) {
+          const offset = 80; // 헤더 높이 고려
+          const targetPosition = target.getBoundingClientRect().top + window.scrollY - offset;
+          window.scrollTo({
+            top: targetPosition,
+            behavior: 'smooth'
+          });
+        }
+      });
+      
+      listItem.appendChild(link);
+      tocList.appendChild(listItem);
+    });
+    
+    tocContent.appendChild(tocList);
+  }
+  
+  // 페이지 로드 시 목차 생성
+  generateTableOfContents();
+  
+  // Astro 페이지 전환 시에도 재생성
+  document.addEventListener('astro:page-load', generateTableOfContents);
+</script>

@@ -1,0 +1,99 @@
+---
+import { Image } from 'astro:assets';
+import { formatDate } from '@/lib/utils';
+
+export interface Props {
+  title: string;
+  description: string;
+  date: Date;
+  slug: string;
+  tags?: string[];
+  cover?: ImageMetadata;
+  coverAlt?: string;
+  readingTime?: number;
+}
+
+const {
+  title,
+  description,
+  date,
+  slug,
+  tags = [],
+  cover,
+  coverAlt,
+  readingTime
+} = Astro.props;
+---
+
+<article class="group relative rounded-lg border bg-card p-6 transition-all hover:shadow-lg">
+  <a href={`/posts/${slug}`} class="absolute inset-0 z-10">
+    <span class="sr-only">{title} 읽기</span>
+  </a>
+  
+  <div class="flex flex-col gap-4">
+    <!-- 커버 이미지 -->
+    {cover && (
+      <div class="relative -mx-6 -mt-6 mb-4 overflow-hidden rounded-t-lg">
+        <Image
+          src={cover}
+          alt={coverAlt || title}
+          width={800}
+          height={420}
+          loading="lazy"
+          class="aspect-[800/420] w-full object-cover transition-transform group-hover:scale-105"
+        />
+      </div>
+    )}
+    
+    <!-- 콘텐츠 -->
+    <div class="space-y-2">
+      <!-- 제목 -->
+      <h2 class="text-2xl font-bold tracking-tight group-hover:text-primary transition-colors line-clamp-2">
+        {title}
+      </h2>
+      
+      <!-- 설명 -->
+      <p class="text-muted-foreground line-clamp-3">
+        {description}
+      </p>
+    </div>
+    
+    <!-- 메타 정보 -->
+    <div class="flex items-center justify-between text-sm text-muted-foreground">
+      <div class="flex items-center gap-3">
+        <!-- 날짜 -->
+        <time datetime={date.toISOString()}>
+          {formatDate(date)}
+        </time>
+        
+        <!-- 읽기 시간 -->
+        {readingTime && (
+          <>
+            <span>•</span>
+            <span>{readingTime}분 읽기</span>
+          </>
+        )}
+      </div>
+    </div>
+    
+    <!-- 태그 -->
+    {tags.length > 0 && (
+      <div class="relative z-20 flex flex-wrap gap-2">
+        {tags.slice(0, 3).map((tag) => (
+          <a
+            href={`/tags/${tag}`}
+            class="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors"
+            onclick="event.stopPropagation()"
+          >
+            #{tag}
+          </a>
+        ))}
+        {tags.length > 3 && (
+          <span class="inline-flex items-center text-xs text-muted-foreground">
+            +{tags.length - 3}
+          </span>
+        )}
+      </div>
+    )}
+  </div>
+</article>

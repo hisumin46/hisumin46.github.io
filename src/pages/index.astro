@@ -1,0 +1,152 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostCard from '@/components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+// 최신 포스트 가져오기
+const posts = await getCollection('posts', ({ data }) => {
+  return data.draft !== true;
+});
+
+// 날짜 기준 정렬
+const sortedPosts = posts.sort((a, b) => 
+  b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+// 최신 5개 포스트
+const recentPosts = sortedPosts.slice(0, 5);
+
+// 추천 포스트
+const featuredPosts = sortedPosts.filter(post => post.data.featured);
+---
+
+<BaseLayout title="홈" description="개발 지식과 경험을 공유하는 기술 블로그">
+  <!-- 히어로 섹션 -->
+  <section class="relative bg-gradient-to-b from-primary/5 to-transparent py-20">
+    <div class="container mx-auto px-4 text-center">
+      <h1 class="text-5xl font-bold tracking-tight sm:text-6xl">
+        Tech Blog
+      </h1>
+      <p class="mt-4 text-xl text-muted-foreground max-w-2xl mx-auto">
+        개발 과정에서 배운 지식과 경험을 기록하고 공유합니다.
+        더 나은 코드를 위한 여정을 함께해요.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        <a
+          href="/posts"
+          class="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          모든 포스트 보기
+        </a>
+        <a
+          href="/about"
+          class="inline-flex items-center justify-center rounded-md border border-input bg-background px-6 py-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          소개 보기
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 추천 포스트 -->
+  {featuredPosts.length > 0 && (
+    <section class="py-12">
+      <div class="container mx-auto px-4">
+        <div class="mb-8">
+          <h2 class="text-3xl font-bold">추천 포스트</h2>
+          <p class="mt-2 text-muted-foreground">
+            특별히 선별한 포스트들을 확인해보세요
+          </p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2">
+          {featuredPosts.slice(0, 2).map((post) => (
+            <PostCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date}
+              slug={post.slug}
+              tags={post.data.tags}
+              cover={post.data.cover}
+              coverAlt={post.data.coverAlt}
+              readingTime={post.data.readingTime}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- 최신 포스트 -->
+  <section class="py-12">
+    <div class="container mx-auto px-4">
+      <div class="mb-8 flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-bold">최신 포스트</h2>
+          <p class="mt-2 text-muted-foreground">
+            최근에 작성한 글들입니다
+          </p>
+        </div>
+        <a
+          href="/posts"
+          class="text-sm font-medium text-primary hover:underline"
+        >
+          모두 보기 →
+        </a>
+      </div>
+      
+      {recentPosts.length > 0 ? (
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {recentPosts.map((post) => (
+            <PostCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date}
+              slug={post.slug}
+              tags={post.data.tags}
+              cover={post.data.cover}
+              coverAlt={post.data.coverAlt}
+              readingTime={post.data.readingTime}
+            />
+          ))}
+        </div>
+      ) : (
+        <div class="rounded-lg border border-dashed p-12 text-center">
+          <p class="text-muted-foreground">
+            아직 작성된 포스트가 없습니다.
+          </p>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- CTA 섹션 -->
+  <section class="border-t py-12">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-2xl font-bold">새로운 포스트를 받아보세요</h2>
+      <p class="mt-2 text-muted-foreground">
+        RSS 피드를 구독하고 최신 글을 놓치지 마세요
+      </p>
+      <a
+        href="/rss.xml"
+        class="mt-4 inline-flex items-center gap-2 text-primary hover:underline"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 11a9 9 0 0 1 9 9"></path>
+          <path d="M4 4a16 16 0 0 1 16 16"></path>
+          <circle cx="5" cy="19" r="1"></circle>
+        </svg>
+        RSS 피드 구독
+      </a>
+    </div>
+  </section>
+</BaseLayout>

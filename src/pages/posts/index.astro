@@ -1,0 +1,77 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostCard from '@/components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+// 모든 포스트 가져오기
+const posts = await getCollection('posts', ({ data }) => {
+  return data.draft !== true;
+});
+
+// 날짜 기준 정렬
+const sortedPosts = posts.sort((a, b) => 
+  b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+// 페이지네이션 설정
+const postsPerPage = 9;
+const totalPages = Math.ceil(sortedPosts.length / postsPerPage);
+const currentPage = 1;
+const paginatedPosts = sortedPosts.slice(0, postsPerPage);
+---
+
+<BaseLayout title="모든 포스트" description="블로그의 모든 포스트를 확인하세요">
+  <div class="container mx-auto px-4 py-12">
+    <!-- 헤더 -->
+    <div class="mb-12 text-center">
+      <h1 class="text-4xl font-bold tracking-tight">모든 포스트</h1>
+      <p class="mt-4 text-lg text-muted-foreground">
+        총 {sortedPosts.length}개의 포스트가 있습니다
+      </p>
+    </div>
+
+    <!-- 포스트 그리드 -->
+    {paginatedPosts.length > 0 ? (
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {paginatedPosts.map((post) => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            date={post.data.date}
+            slug={post.slug}
+            tags={post.data.tags}
+            cover={post.data.cover}
+            coverAlt={post.data.coverAlt}
+            readingTime={post.data.readingTime}
+          />
+        ))}
+      </div>
+    ) : (
+      <div class="rounded-lg border border-dashed p-12 text-center">
+        <p class="text-muted-foreground">
+          아직 작성된 포스트가 없습니다.
+        </p>
+      </div>
+    )}
+
+    <!-- 페이지네이션 -->
+    {totalPages > 1 && (
+      <nav class="mt-12 flex justify-center">
+        <div class="flex gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <a
+              href={page === 1 ? '/posts' : `/posts/${page}`}
+              class={`inline-flex h-9 min-w-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors ${
+                page === currentPage
+                  ? 'bg-primary text-primary-foreground'
+                  : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'
+              }`}
+            >
+              {page}
+            </a>
+          ))}
+        </div>
+      </nav>
+    )}
+  </div>
+</BaseLayout>
