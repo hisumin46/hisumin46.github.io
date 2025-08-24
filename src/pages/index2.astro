@@ -1,0 +1,182 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+// 포스트 가져오기
+const posts = await getCollection('posts', ({ data }) => {
+  return data.draft !== true;
+});
+
+// 날짜 기준 정렬
+const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+// 카테고리별 포스트 그룹핑
+const categories = [
+  {
+    title: '개발',
+    posts: sortedPosts
+      .filter((post) =>
+        post.data.tags?.some((tag) =>
+          ['javascript', 'typescript', 'react', 'astro', 'web'].includes(tag)
+        )
+      )
+      .slice(0, 8),
+  },
+  {
+    title: '회고',
+    posts: sortedPosts
+      .filter((post) =>
+        post.data.tags?.some((tag) => ['retrospective', 'reflection', '회고'].includes(tag))
+      )
+      .slice(0, 4),
+  },
+  {
+    title: '구현',
+    posts: sortedPosts
+      .filter((post) =>
+        post.data.tags?.some((tag) => ['implementation', 'tutorial', 'guide'].includes(tag))
+      )
+      .slice(0, 4),
+  },
+];
+---
+
+<BaseLayout title="개발자의 일상" description="배움과 경험, 그리고 만들어가는 이야기">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- 메인 컨텐츠 영역 -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- 메인 콘텐츠 -->
+      <main class="lg:col-span-3 space-y-12">
+        <!-- 인트로 섹션 -->
+        <section class="py-8">
+          <h1 class="text-3xl font-bold mb-4">개발자의 일상</h1>
+          <p class="text-muted-foreground text-lg leading-relaxed">
+            배움과 경험, 그리고 만들어가는 이야기
+          </p>
+        </section>
+
+        <!-- 카테고리별 포스트 -->
+        {
+          categories.map(
+            (category) =>
+              category.posts.length > 0 && (
+                <section>
+                  <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold">{category.title}</h2>
+                    <a
+                      href={`/tags/${category.title.toLowerCase()}`}
+                      class="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      더보기 →
+                    </a>
+                  </div>
+
+                  <div class="space-y-4">
+                    {category.posts.map((post) => (
+                      <article class="group">
+                        <a href={`/posts/${post.slug}`} class="block">
+                          <div class="flex items-start gap-4 p-4 rounded-lg hover:bg-accent/50 transition-colors">
+                            <div class="flex-1 min-w-0">
+                              <h3 class="font-medium text-lg mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                                {post.data.title}
+                              </h3>
+                              <p class="text-muted-foreground text-sm line-clamp-2 mb-3">
+                                {post.data.description}
+                              </p>
+                              <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                                <time>{post.data.date.toLocaleDateString('ko-KR')}</time>
+                                {post.data.tags && post.data.tags.length > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <div class="flex gap-1">
+                                      {post.data.tags.slice(0, 2).map((tag) => (
+                                        <span class="px-2 py-1 rounded-full bg-secondary text-xs">
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </a>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )
+          )
+        }
+
+        {/* 포스트가 없는 경우 */}
+        {
+          sortedPosts.length === 0 && (
+            <div class="text-center py-12">
+              <p class="text-muted-foreground">아직 작성된 포스트가 없습니다.</p>
+            </div>
+          )
+        }
+      </main>
+
+      <!-- 사이드바 -->
+      <aside class="lg:col-span-1 space-y-8">
+        <!-- 소개 -->
+        <div class="bg-muted/30 rounded-lg p-6">
+          <h3 class="font-semibold mb-3">소개</h3>
+          <p class="text-sm text-muted-foreground leading-relaxed">
+            프론트엔드 개발자로 일하며 배운 것들을 기록합니다. 새로운 기술과 더 나은 개발 방법을
+            탐구하는 것을 좋아합니다.
+          </p>
+        </div>
+
+        <!-- 최근 포스트 -->
+        <div>
+          <h3 class="font-semibold mb-4">최근 포스트</h3>
+          <div class="space-y-3">
+            {
+              sortedPosts.slice(0, 5).map((post) => (
+                <a
+                  href={`/posts/${post.slug}`}
+                  class="block p-3 rounded-lg hover:bg-accent/50 transition-colors group"
+                >
+                  <h4 class="text-sm font-medium mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                    {post.data.title}
+                  </h4>
+                  <time class="text-xs text-muted-foreground">
+                    {post.data.date.toLocaleDateString('ko-KR')}
+                  </time>
+                </a>
+              ))
+            }
+          </div>
+        </div>
+
+        <!-- 태그 클라우드 -->
+        <div>
+          <h3 class="font-semibold mb-4">태그</h3>
+          <div class="flex flex-wrap gap-2">
+            {
+              Array.from(new Set(sortedPosts.flatMap((post) => post.data.tags || [])))
+                .slice(0, 8)
+                .map((tag) => (
+                  <a
+                    href={`/tags/${tag}`}
+                    class="px-3 py-1 rounded-full bg-secondary text-xs hover:bg-secondary/80 transition-colors"
+                  >
+                    #{tag}
+                  </a>
+                ))
+            }
+          </div>
+          <a
+            href="/tags"
+            class="inline-block mt-3 text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            모든 태그 보기 →
+          </a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

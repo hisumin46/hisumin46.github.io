@@ -2,79 +2,208 @@
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { label: '홈', href: '/' },
-  { label: '포스트', href: '/posts' },
-  { label: '태그', href: '/tags' },
-  { label: '소개', href: '/about' },
+  { label: '개발', href: '/posts' },
+  { label: '회고', href: '/tags/retrospective' },
+  { label: '구현', href: '/tags/implementation' },
 ];
 
 const currentPath = Astro.url.pathname;
 ---
 
-<header class="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-  <div class="container mx-auto flex h-16 items-center px-4">
+<header class="border-b bg-background">
+  <div class="container mx-auto flex h-16 items-center justify-between px-4 max-w-4xl">
     <!-- 로고 -->
-    <a href="/" class="mr-6 flex items-center space-x-2">
-      <span class="text-xl font-bold">Tech Blog</span>
+    <a href="/" class="flex items-center space-x-3">
+      <div class="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background font-bold text-sm">
+        B
+      </div>
+      <span class="text-lg font-semibold">My Dev Blog</span>
     </a>
     
     <!-- 네비게이션 -->
-    <nav class="flex flex-1 items-center justify-between">
-      <ul class="flex items-center space-x-6">
-        {navItems.map((item) => (
-          <li>
-            <a
-              href={item.href}
-              class={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
-                currentPath === item.href
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              )}
-            >
-              {item.label}
-            </a>
-          </li>
-        ))}
-      </ul>
-      
-      <!-- 검색 버튼 -->
+    <nav class="hidden md:flex items-center space-x-8">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          class={cn(
+            "text-sm font-medium transition-colors hover:text-primary",
+            currentPath === item.href || currentPath.startsWith(item.href)
+              ? "text-primary"
+              : "text-muted-foreground"
+          )}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+    
+    <!-- 검색 및 테마 토글 -->
+    <div class="flex items-center space-x-2">
       <button
         id="search-button"
-        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+        class="p-2 rounded-md hover:bg-accent transition-colors"
         aria-label="검색"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
+          width="18"
+          height="18"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="mr-2"
         >
           <circle cx="11" cy="11" r="8"></circle>
           <path d="m21 21-4.35-4.35"></path>
         </svg>
-        <span class="hidden sm:inline">검색</span>
-        <kbd class="pointer-events-none ml-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-          <span class="text-xs">⌘</span>K
-        </kbd>
       </button>
-    </nav>
+      
+      <!-- 테마 토글 버튼 -->
+      <button
+        id="theme-toggle"
+        type="button"
+        class="p-2 rounded-md hover:bg-accent transition-colors"
+        aria-label="테마 전환"
+      >
+        <!-- 라이트 모드 아이콘 -->
+        <svg
+          id="theme-toggle-light-icon"
+          class="hidden h-[18px] w-[18px]"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
+        
+        <!-- 다크 모드 아이콘 -->
+        <svg
+          id="theme-toggle-dark-icon"
+          class="hidden h-[18px] w-[18px]"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
+          ></path>
+        </svg>
+      </button>
+      
+      <button
+        id="mobile-menu-toggle"
+        class="md:hidden p-2 rounded-md hover:bg-accent transition-colors"
+        aria-label="메뉴"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="4" y1="6" x2="20" y2="6"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- 모바일 메뉴 -->
+  <div id="mobile-menu" class="hidden md:hidden border-t">
+    <div class="container mx-auto px-4 py-4 max-w-4xl">
+      <nav class="flex flex-col space-y-3">
+        {navItems.map((item) => (
+          <a
+            href={item.href}
+            class={cn(
+              "text-sm font-medium transition-colors hover:text-primary py-2",
+              currentPath === item.href || currentPath.startsWith(item.href)
+                ? "text-primary"
+                : "text-muted-foreground"
+            )}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+    </div>
   </div>
 </header>
 
 <script>
-  // 검색 기능 (추후 구현)
+  // 검색 기능
   const searchButton = document.getElementById('search-button');
-  
   searchButton?.addEventListener('click', () => {
     console.log('Search clicked');
-    // TODO: 검색 모달 열기
+  });
+  
+  // 테마 토글 기능
+  function initThemeToggle() {
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+    
+    if (!themeToggleBtn || !themeToggleLightIcon || !themeToggleDarkIcon) return;
+    
+    // 현재 테마 가져오기
+    function getCurrentTheme(): 'light' | 'dark' {
+      if (localStorage.getItem('theme')) {
+        return localStorage.getItem('theme') as 'light' | 'dark';
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    // 아이콘 업데이트
+    function updateIcons(theme: 'light' | 'dark') {
+      if (theme === 'dark') {
+        themeToggleLightIcon.classList.remove('hidden');
+        themeToggleDarkIcon.classList.add('hidden');
+      } else {
+        themeToggleLightIcon.classList.add('hidden');
+        themeToggleDarkIcon.classList.remove('hidden');
+      }
+    }
+    
+    // 테마 설정
+    function setTheme(theme: 'light' | 'dark') {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      localStorage.setItem('theme', theme);
+      updateIcons(theme);
+    }
+    
+    // 초기 아이콘 설정
+    updateIcons(getCurrentTheme());
+    
+    // 토글 버튼 클릭 이벤트
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = getCurrentTheme();
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      setTheme(newTheme);
+    });
+  }
+  
+  // 모바일 메뉴 토글
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  const mobileMenu = document.getElementById('mobile-menu');
+  
+  mobileMenuToggle?.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
   });
   
   // 키보드 단축키
@@ -84,4 +213,10 @@ const currentPath = Astro.url.pathname;
       searchButton?.click();
     }
   });
+  
+  // 초기화
+  initThemeToggle();
+  
+  // Astro 페이지 전환 시에도 재초기화
+  document.addEventListener('astro:page-load', initThemeToggle);
 </script>

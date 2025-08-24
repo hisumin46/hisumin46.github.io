@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
+import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import tailwind from '@astrojs/tailwind';
 
@@ -17,6 +18,9 @@ export default defineConfig({
   
   // 통합 플러그인 설정
   integrations: [
+    // React 지원
+    react(),
+    
     // MDX 지원
     mdx({
       syntaxHighlight: 'shiki',
